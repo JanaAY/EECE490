@@ -1,1 +1,1 @@
-# EECE490
+# Synthetic Fundus Image Generation for Diabetic Retinopathy Dataset Balancing
