@@ -28,7 +28,7 @@ function App() {
   return (
     <div className="app-layout">
       <header className="navbar">
-        <div className="brand">🧠 MedBot</div>
+        <div className="brand">Logo</div>
         <div className="auth-buttons">
           <button className="nav-btn">Log In</button>
           <button className="nav-btn signup">Sign Up</button>
@@ -37,9 +37,9 @@ function App() {
 
       <div className="main-layout">
         <aside className="sidebar">
-          <div className="tab active">💬 Chat</div>
-          <div className="tab">📁 Files</div>
-          <div className="tab">⚙️ Settings</div>
+          <div className="tab active">Feature 2</div>
+          <div className="tab">Feature 3</div>
+          <div className="tab">Feature 4</div>
         </aside>
 
         <div className="chat-wrapper">
