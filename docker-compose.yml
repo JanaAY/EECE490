@@ -1,0 +1,20 @@
+version: "3.9"
+
+services:
+  backend:
+    build: ./backend
+    # Map container's port 5000 → host port 5000
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./backend/.env          # Azure secrets & deployment names
+    restart: unless-stopped
+
+  frontend:
+    build: ./eece490_ui        # point directly at your Next.js folder
+    # Map container's port 3000 → host port 3000
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_DR_API_URL=http://localhost:5000/chat
+    restart: unless-stopped

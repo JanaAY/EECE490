@@ -1,0 +1,45 @@
+# ==============================
+# backend/.dockerignore
+# ==============================
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+*.whl
+
+# Virtual environments
+env/
+venv/
+ENV/
+.venv/
+
+# Logs and databases
+*.log
+*.sqlite3
+
+# IDE / Editor
+.vscode/
+.idea/
+.DS_Store
+
+# Colab & Jupyter
+*.ipynb
+
+# Environment variables
+.env
+
+# Git metadata
+.git/
+.gitignore
+
+# Docker context files (these are built into the image via Dockerfile)
+Dockerfile
+docker-compose.yml
