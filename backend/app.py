@@ -1,53 +1,97 @@
-# app.py  (inside eece490-backend/)
-import os, re, pickle, faiss, numpy as np
+import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
+import numpy as np
+import pickle
 from openai import AzureOpenAI
+from sklearn.metrics.pairwise import cosine_similarity
 
-load_dotenv()                       # .env holds your Azure keys
-EMBED = os.getenv("EMBED_DEPLOYMENT", "text-embedding-ada-002")
-CHAT  = os.getenv("CHAT_DEPLOYMENT",  "gpt-4o-mini")
+# Load environment variables
+load_dotenv()
 
+# Debug prints
+print("API Key:", os.getenv("AZURE_OPENAI_KEY"))
+print("Endpoint:", os.getenv("AZURE_OPENAI_ENDPOINT"))
+print("Deployment:", os.getenv("AZURE_OPENAI_DEPLOYMENT"))
+
+# Initialize Azure OpenAI client
 client = AzureOpenAI(
-    api_key        = os.getenv("AZURE_OPENAI_KEY"),
-    azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT"),
-    api_version    = "2025-01-01-preview",
+    azure_endpoint="https://twt00-m9jvr359-eastus2.openai.azure.com/",
+    api_key="CIOd5mdimXIfdjcMJ8ZqfmUAwSJPGQuxzogAgD8HsKYu4NBcRQoCJQQJ99BDACHYHv6XJ3w3AAAAACOG9VXo",
+    api_version="2025-01-01-preview"
 )
 
-# --- load model files -------------------------------------------------
-MODEL_DIR = os.path.join(os.path.dirname(__file__), "model")
-index = faiss.read_index(os.path.join(MODEL_DIR, "dr_index.faiss"))
-texts = pickle.load(open(os.path.join(MODEL_DIR, "dr_texts.pkl"), "rb"))
+# Load embeddings and texts
+embedding_matrix = np.load("dr_embeddings.npy")
+with open("dr_texts.pkl", "rb") as f:
+    texts = pickle.load(f)
 
-# --- helpers ----------------------------------------------------------
-clean = lambda s: re.sub(r"[^a-z0-9\s]", "", s.lower()).strip()
-def embed(q):
-    e = client.embeddings.create(model=EMBED, input=[q])
-    return np.asarray(e.data[0].embedding, dtype="float32").reshape(1, -1)
-
-def answer(query, k=3):
-    vec          = embed(clean(query))
-    _d, idx      = index.search(vec, k)
-    context      = "\n\n".join(texts[i] for i in idx[0])
-    resp = client.chat.completions.create(
-        model=CHAT,
-        messages=[
-            {"role":"system","content":
-                "You are a friendly DR assistant. Use context when helpful:\n\n"+context},
-            {"role":"user","content":query}],
-        max_tokens=800, temperature=.5
+def embed_query(text):
+    """Get embedding for query text"""
+    response = client.embeddings.create(
+        model="text-embedding-ada-002",
+        input=[text]
     )
-    return {"answer": resp.choices[0].message.content}
+    return np.array(response.data[0].embedding).reshape(1, -1).astype("float32")
 
-# --- flask app --------------------------------------------------------
+def ask_gpt_with_context(query, top_k=3):
+    """Main function to get GPT response with relevant context"""
+    # 1. Embed the query
+    query_vec = embed_query(query)
+
+    # 2. Find most similar chunks
+    similarities = cosine_similarity(query_vec, embedding_matrix)
+    top_k_indices = similarities[0].argsort()[::-1][:top_k]
+    retrieved_chunks = [texts[i] for i in top_k_indices]
+
+    # 3. Build system prompt with relevant context
+    context = "\n\n".join(retrieved_chunks)
+    messages = [
+        {
+            "role": "system",
+            "content": (
+                "You are a friendly and helpful assistant specialized in diabetic retinopathy (DR). "
+                "Always greet users warmly and answer in a clear, supportive tone. "
+                "Only answer questions related to diabetic retinopathy. "
+                "If a question is unrelated, respond politely with: "
+                "'I'm sorry, I only provide support for diabetic retinopathy-related topics.'\n\n"
+                "Use the following research document context if helpful:\n\n" + context
+            )
+        },
+        {"role": "user", "content": query}
+    ]
+
+    # 4. Call GPT
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=messages,
+        max_tokens=800,
+        temperature=0.5
+    )
+
+    return response.choices[0].message.content
+
+# Initialize Flask app
 app = Flask(__name__)
-CORS(app)                                    # allow any origin (change later)
+CORS(app)
 
 @app.post("/chat")
-def chat():                                  # POST JSON: { "query": "..." }
-    q = request.json.get("query", "")
-    return jsonify(answer(q)) if q else (jsonify({"error":"no query"}), 400)
+def chat():
+    """Endpoint to handle chat requests"""
+    query = request.json.get("query", "")
+    if not query:
+        return jsonify({"error": "no query"}), 400
+        
+    try:
+        response = ask_gpt_with_context(query)
+        return jsonify({
+            "answer": response,
+            "confidence": 1.0,  # Since we're using GPT, we'll assume high confidence
+            "is_confident": True
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=5000, debug=True)
