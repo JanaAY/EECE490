@@ -6,6 +6,13 @@ import numpy as np
 import pickle
 from openai import AzureOpenAI
 from sklearn.metrics.pairwise import cosine_similarity
+import base64
+import io
+from generator import load_generator, generate_images
+import cv2
+import torch
+from preprocessing import preprocess_image
+from model import DARes2UNet
 
 # Load environment variables
 load_dotenv()
@@ -26,6 +33,28 @@ client = AzureOpenAI(
 embedding_matrix = np.load("dr_embeddings.npy")
 with open("dr_texts.pkl", "rb") as f:
     texts = pickle.load(f)
+
+# Load generators at startup
+try:
+    print("Loading image generators...")
+    G_no_dr = load_generator('./generation/no_dr_model.pkl')
+    G_dr = load_generator('./generation/dr_model.pkl')
+    print("Image generators loaded successfully!")
+except Exception as e:
+    print(f"Error loading generators: {e}")
+    G_no_dr = None
+    G_dr = None
+
+# Initialize model
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+vessel_model = DARes2UNet().to(device)
+try:
+    vessel_model.load_state_dict(torch.load('best_model.pth', map_location=device))
+    vessel_model.eval()
+    print("Vessel mapping model loaded successfully!")
+except Exception as e:
+    print(f"Error loading vessel mapping model: {e}")
+    vessel_model = None
 
 def embed_query(text):
     """Get embedding for query text"""
@@ -90,6 +119,82 @@ def chat():
             "confidence": 1.0,  # Since we're using GPT, we'll assume high confidence
             "is_confident": True
         })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.post("/generate")
+def generate():
+    """Endpoint to generate DR and non-DR images"""
+    if G_dr is None or G_no_dr is None:
+        return jsonify({"error": "Image generators not initialized"}), 500
+        
+    try:
+        dr_count = int(request.json.get("dr_count", 0))
+        non_dr_count = int(request.json.get("non_dr_count", 0))
+        
+        if dr_count < 0 or non_dr_count < 0 or dr_count + non_dr_count > 100:
+            return jsonify({"error": "Invalid image counts"}), 400
+        
+        # Generate images
+        dr_images = generate_images(G_dr, num_images=dr_count) if dr_count > 0 else []
+        non_dr_images = generate_images(G_no_dr, num_images=non_dr_count) if non_dr_count > 0 else []
+        
+        # Convert to base64
+        def img_to_base64(img):
+            buffered = io.BytesIO()
+            img.save(buffered, format="PNG")
+            return base64.b64encode(buffered.getvalue()).decode()
+            
+        response = {
+            "dr_images": [img_to_base64(img) for img in dr_images],
+            "non_dr_images": [img_to_base64(img) for img in non_dr_images]
+        }
+        
+        return jsonify(response)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.post("/vessel-map")
+def generate_vessel_map():
+    """Endpoint to generate vessel map from retinal image"""
+    if vessel_model is None:
+        return jsonify({"error": "Vessel mapping model not initialized"}), 500
+        
+    try:
+        # Get the image from request
+        if 'image' not in request.files:
+            return jsonify({"error": "No image provided"}), 400
+            
+        file = request.files['image']
+        # Read image
+        img_stream = io.BytesIO(file.read())
+        img_array = np.frombuffer(img_stream.getvalue(), dtype=np.uint8)
+        image = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
+        
+        if image is None:
+            return jsonify({"error": "Invalid image format"}), 400
+            
+        # Preprocess image
+        processed_img = preprocess_image(image)
+        
+        # Convert to tensor and add batch dimension
+        img_tensor = torch.from_numpy(processed_img).permute(2, 0, 1).unsqueeze(0).to(device)
+        
+        # Generate vessel map
+        with torch.no_grad():
+            vessel_map = vessel_model(img_tensor)
+            
+        # Convert to image
+        vessel_map = (vessel_map[0, 0].cpu().numpy() * 255).astype(np.uint8)
+        
+        # Convert to base64
+        _, buffer = cv2.imencode('.png', vessel_map)
+        vessel_map_base64 = base64.b64encode(buffer).decode()
+        
+        return jsonify({
+            "vessel_map": vessel_map_base64
+        })
+        
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
