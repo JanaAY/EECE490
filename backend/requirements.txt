@@ -1,0 +1,8 @@
+flask
+flask-cors
+flask-ngrok        # only if you want easy public tunnel from Colab/local
+openai>=1.14
+langchain-community>=0.0.19
+faiss-cpu
+python-dotenv      # loads .env
+numpy
