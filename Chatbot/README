@@ -2,6 +2,7 @@ Diabetic Retinopathy Research Assistant Chatbot
 
 This repository contains the code for a Diabetic Retinopathy (DR) Research Assistant Chatbot, developed to support researchers and practitioners by answering diabetic retinopathy-specific questions based on a curated dataset of medical articles and expert knowledge.
 Features:
+
 - Domain-Specific Expertise: Focused exclusively on diabetic retinopathy (DR) topics.
 - Context-Aware Responses: Answers are generated using embedded documents combined with a GPT model.
 - Multi-Turn Conversations: Supports follow-up questions within the same session.
