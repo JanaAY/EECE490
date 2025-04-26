@@ -48,7 +48,6 @@ export default function DetectionPage() {
       setAnalysisResult(data)
     } catch (err) {
       console.error(err)
-      // TODO: show user‐friendly error
     } finally {
       setIsAnalyzing(false)
     }
@@ -64,7 +63,7 @@ export default function DetectionPage() {
     <main className="container px-4 md:px-6 py-8">
       <input
         type="file"
-        accept="image/*"
+        accept="image/jpeg, image/jpg, image/png, image/tiff"
         hidden
         ref={fileInputRef}
         onChange={onFileChange}
@@ -74,15 +73,11 @@ export default function DetectionPage() {
         <div className="text-center space-y-2 mb-8">
           <h1 className="text-3xl font-bold sm:text-4xl text-blue-900">DR Detection</h1>
           <p className="text-gray-600 md:text-lg">
-            Upload retinal images for automated diabetic retinopathy detection and grading
+            Upload retinal images for automated diabetic retinopathy detection
           </p>
         </div>
 
         <Tabs defaultValue="detection" className="w-full">
-          <TabsList className="grid grid-cols-2 mb-6">
-            <TabsTrigger value="detection">DR Detection</TabsTrigger>
-            <TabsTrigger value="vessel-mapping">Vessel Mapping</TabsTrigger>
-          </TabsList>
 
           <TabsContent value="detection" className="space-y-6">
             <div className="grid gap-6 md:grid-cols-2">
@@ -102,7 +97,7 @@ export default function DetectionPage() {
                           <Upload className="h-8 w-8 text-blue-300" />
                         </div>
                         <h3 className="text-lg font-medium">Upload Image</h3>
-                        <p className="text-sm text-gray-500">Supported: JPEG, PNG, TIFF (≤10MB)</p>
+                        <p className="text-sm text-gray-500">Supported: JPEG, PNG, TIFF, JPG (≤10MB)</p>
                         <Button onClick={handleImageUpload} className="bg-blue-700 hover:bg-blue-800">
                           Select Image
                         </Button>
@@ -136,11 +131,14 @@ export default function DetectionPage() {
                     </div>
                   )}
 
-                  <div className="bg-blue-50 rounded-md p-4">
+                  {/* About Section */}
+                  <div className="bg-blue-50 rounded-md p-4 mt-4">
                     <h3 className="text-sm font-medium text-blue-800">About Our DR Detection</h3>
                     <p className="text-xs text-blue-700">
-                      Trained on 100k+ retinal images, 97.8% accuracy. Detects microaneurysms, hemorrhages,
-                      exudates, and neovascularization.
+                      Our detection system is powered by the <strong>RSGNet</strong> model,
+                      specifically designed for binary-class classification of diabetic retinopathy (DR vs. No DR).
+                      The model achieved a <strong>75% validation accuracy</strong> during evaluation.
+                      Further improvements are ongoing in collaboration with medical specialists to enhance diagnostic reliability.
                     </p>
                   </div>
                 </CardContent>
@@ -223,9 +221,6 @@ export default function DetectionPage() {
               </Card>
             </div>
           </TabsContent>
-
-          {/* Keep your vessel-mapping tab unchanged */}
-          <TabsContent value="vessel-mapping">…</TabsContent>
         </Tabs>
       </div>
     </main>
