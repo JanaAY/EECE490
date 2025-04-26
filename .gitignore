@@ -31,3 +31,5 @@ pip-delete-this-directory.txt
 # OS
 .DS_Store
 Thumbs.db 
+
+backend/generation/*.pkl
