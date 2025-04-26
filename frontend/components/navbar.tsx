@@ -24,7 +24,7 @@ export default function Navbar() {
       <div className="container flex h-16 items-center justify-between px-4 md:px-6">
         <Link href="/" className="flex items-center gap-2">
           <Eye className="h-6 w-6 text-blue-700" />
-          <span className="text-xl font-bold">DR Research</span>
+          <span className="text-xl font-bold">RETINALAB</span>
         </Link>
 
         <nav className="hidden md:flex gap-6">

@@ -38,7 +38,7 @@ export default function Home() {
             </div>
             <div className="flex items-center justify-center">
               <Image
-                src="/placeholder.svg?height=400&width=500"
+                src="/blog_what-is-ophthalmology_1.jpg?height=400&width=500"
                 alt="Diabetic Retinopathy Visualization"
                 width={500}
                 height={400}

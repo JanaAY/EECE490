@@ -9,7 +9,7 @@ export default function Footer() {
           <div className="flex flex-col gap-2">
             <Link href="/" className="flex items-center gap-2">
               <Eye className="h-5 w-5 text-blue-700" />
-              <span className="text-lg font-bold">DR Research</span>
+              <span className="text-lg font-bold">RETINALAB</span>
             </Link>
             <p className="text-sm text-gray-500">
               Advanced platform for diabetic retinopathy research, detection, and analysis.

@@ -11,12 +11,35 @@ import io
 from generator import load_generator, generate_images
 import cv2
 import torch
-from preprocessing import preprocess_image
+import base64                                       
+
+
+# # — DR detection imports —
+# from model_detection      import load_model, predict
+# from preprocess_detection import preprocess_image
+
+# import sys
+# from tensorflow import keras
+# from tensorflow.keras.models import functional as functional_module
+
+# — vessel mapping import —
 from model import DARes2UNet
+from preprocessing import preprocess_image
 
-# Load environment variables
-load_dotenv()
 
+
+# # Make “keras.src.models.functional” resolve to TF-Keras’s functional module:
+# sys.modules['keras']                       = keras
+# sys.modules['keras.src']                   = keras
+# sys.modules['keras.src.models']            = keras.models
+# sys.modules['keras.src.models.functional'] = functional_module
+
+# from tensorflow.keras.models import load_model as keras_load_model
+# print("Loading DR model…")
+# dr_model = keras_load_model("best_model.keras")
+# print("✅ DR model ready!")
+
+    
 # Debug prints
 print("API Key:", os.getenv("AZURE_OPENAI_KEY"))
 print("Endpoint:", os.getenv("AZURE_OPENAI_ENDPOINT"))
@@ -130,8 +153,10 @@ def generate():
         
     try:
         dr_count = int(request.json.get("dr_count", 0))
-        non_dr_count = int(request.json.get("non_dr_count", 0))
-        
+        #non_dr_count = int(request.json.get("non_dr_count", 0))
+        non_dr_count = 0
+
+
         if dr_count < 0 or non_dr_count < 0 or dr_count + non_dr_count > 100:
             return jsonify({"error": "Invalid image counts"}), 400
         
@@ -198,5 +223,53 @@ def generate_vessel_map():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+# @app.route("/detect", methods=["POST"])
+# @cross_origin()   # ensure CORS header even on failures
+# def detect():
+#     if dr_model is None:
+#         return jsonify(error="DR model not initialized"), 500
+
+#     if "image" not in request.files:
+#         return jsonify(error="No file part"), 400
+
+#     # 1) Decode upload
+#     file = request.files["image"]
+#     arr  = np.frombuffer(file.read(), dtype=np.uint8)
+#     img  = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+#     if img is None:
+#         return jsonify(error="Cannot decode image"), 400
+
+#     # 2) Preprocess & quality checks
+#     proc = preprocess_image(img)
+#     if proc is None:
+#         return jsonify(error="Image failed quality checks"), 400
+
+#     # 3) Inference
+#     prob = float(predict(dr_model, proc))  # sigmoid output in [0,1]
+
+#     # 4) Build response fields
+#     prediction = "DR Detected" if prob >= 0.5 else "No DR Detected"
+#     confidence = prob if prob >= 0.5 else 1 - prob
+
+#     severity = None
+#     if prob >= 0.5:
+#         if prob < 0.6: severity = "Mild NPDR"
+#         elif prob < 0.8: severity = "Moderate NPDR"
+#         else: severity = "Severe NPDR"
+
+#     features = [
+#         "Microaneurysms",
+#         "Dot & blot hemorrhages",
+#         "Hard exudates",
+#         "Cotton wool spots"
+#     ] if prob >= 0.5 else []
+
+#     return jsonify({
+#         "prediction": prediction,
+#         "confidence": round(confidence, 3),
+#         "severity": severity,
+#         "features": features
+#     })
+    
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
