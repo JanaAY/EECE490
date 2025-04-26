@@ -3,13 +3,14 @@
 import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Upload, Loader2 } from "lucide-react"
+import { Upload, Download, Loader2 } from "lucide-react" // Importing Download icon
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
 
 export default function VesselMapPage() {
   const [isUploading, setIsUploading] = useState(false)
   const [uploadedImage, setUploadedImage] = useState<string | null>(null)
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null)
   const [vesselMap, setVesselMap] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -20,16 +21,16 @@ export default function VesselMapPage() {
 
     setIsUploading(true)
     setError(null)
-    
+
     try {
-      // First, display the uploaded image
       const reader = new FileReader()
       reader.onloadend = () => {
         setUploadedImage(reader.result as string)
       }
       reader.readAsDataURL(file)
 
-      // Then send to backend for processing
+      setUploadedFileName(file.name.split(".")[0]) // Save file name without extension
+
       const formData = new FormData()
       formData.append('image', file)
 
@@ -81,15 +82,15 @@ export default function VesselMapPage() {
           <Card>
             <CardHeader>
               <CardTitle>Upload Retinal Image</CardTitle>
-              <CardDescription>
-                Upload a retinal image for vessel mapping
-              </CardDescription>
+              <CardDescription>Upload a retinal image for vessel mapping</CardDescription>
             </CardHeader>
+
             <CardContent className="space-y-6">
               <div className="border-2 border-dashed rounded-lg p-8 text-center bg-gray-50">
                 {uploadedImage ? (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-2 gap-6">
+                      {/* Original Image */}
                       <div>
                         <h3 className="text-lg font-medium mb-2">Original Image</h3>
                         <div className="rounded-lg overflow-hidden border">
@@ -100,6 +101,8 @@ export default function VesselMapPage() {
                           />
                         </div>
                       </div>
+
+                      {/* Vessel Map */}
                       {vesselMap && (
                         <div>
                           <h3 className="text-lg font-medium mb-2">Vessel Map</h3>
@@ -110,17 +113,33 @@ export default function VesselMapPage() {
                               className="w-full h-auto"
                             />
                           </div>
+                          <div className="mt-4 flex justify-center">
+                            <a
+                              href={vesselMap}
+                              download={`${uploadedFileName || "image"}_vessel_map.png`}
+                            >
+                              <Button variant="outline" className="bg-blue-700 hover:bg-blue-800 text-white">
+                                Download Vessel Map
+                              </Button>
+                            </a>
+                          </div>
                         </div>
                       )}
                     </div>
-                    <div className="flex justify-between">
-                      <Button variant="outline" onClick={resetAnalysis} size="sm">
+
+                    {/* Centered Remove Button */}
+                    <div className="flex justify-center">
+                      <Button variant="outline" onClick={resetAnalysis} size="sm" className="mt-4">
                         Remove
                       </Button>
-                      {error && (
-                        <p className="text-red-500 text-sm">{error}</p>
-                      )}
                     </div>
+
+                    {/* Error message */}
+                    {error && (
+                      <div className="text-red-500 text-sm text-center mt-2">
+                        {error}
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -136,7 +155,7 @@ export default function VesselMapPage() {
                     <div>
                       <input
                         type="file"
-                        accept="image/*"
+                        accept="image/jpeg,image/png,image/tiff,image/jpg"
                         className="hidden"
                         ref={fileInputRef}
                         onChange={handleImageUpload}
@@ -158,12 +177,13 @@ export default function VesselMapPage() {
                       </Button>
                     </div>
                     <p className="text-xs text-gray-500">
-                      Supported formats: JPEG, PNG, TIFF (max 10MB)
+                      Supported formats: JPEG, PNG, TIFF, JPG (max 10MB)
                     </p>
                   </div>
                 )}
               </div>
 
+              {/* Info Cards */}
               <div className="grid gap-6 md:grid-cols-2">
                 <Card>
                   <CardHeader className="pb-2">
@@ -171,12 +191,19 @@ export default function VesselMapPage() {
                   </CardHeader>
                   <CardContent className="text-sm">
                     <p className="mb-2">
-                      Our vessel mapping tool provides:
+                      The purpose of vessel mapping is to extract detailed vascular structures,
+                      which help in distinguishing between Diabetic Retinopathy (DR) and non-DR cases.
+                      Features like vessel elongation, tortuosity, and vessel density are critical
+                      indicators for early diagnosis.
                     </p>
-                    <ul className="space-y-1 list-disc pl-5">
-                      <li>Automated vessel segmentation</li>
-                      <li>High-resolution vessel mapping</li>
-                      <li>Clear visualization of retinal vasculature</li>
+                    <p className="mb-4">
+                      This mapping is powered by the <strong>DA-Res2UNet</strong> model, evaluated with the following metrics:
+                    </p>
+                    <ul className="space-y-2 list-disc pl-5">
+                      <li><strong>Dice Score:</strong> 84.25%</li>
+                      <li><strong>Accuracy:</strong> 98.05%</li>
+                      <li><strong>Sensitivity:</strong> 79.91%</li>
+                      <li><strong>Specificity:</strong> 99.32%</li>
                     </ul>
                   </CardContent>
                 </Card>
