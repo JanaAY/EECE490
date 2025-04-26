@@ -45,8 +45,8 @@ export default function Footer() {
                   </Link>
                 </li>
                 <li>
-                  <Link href="/data-analysis" className="text-sm text-gray-500 hover:text-blue-700">
-                    Data Analysis
+                  <Link href="/vessel-mapping" className="text-sm text-gray-500 hover:text-blue-700">
+                    Vessel Mapping
                   </Link>
                 </li>
                 <li>
