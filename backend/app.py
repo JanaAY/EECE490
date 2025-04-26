@@ -39,6 +39,17 @@ from preprocessing import preprocess_image
 # dr_model = keras_load_model("best_model.keras")
 # print("✅ DR model ready!")
 
+# import os
+# import gdown
+
+# # Directory where the model should be
+# model_path = "backend/generation/dr_model.pkl"
+
+# # If the model doesn't exist, download it
+# if not os.path.exists(model_path):
+#     print("Downloading dr_model.pkl...")
+#     url = "https://drive.google.com/uc?id=YOUR_FILE_ID"
+#     gdown.download(url, model_path, quiet=False)
     
 # Debug prints
 print("API Key:", os.getenv("AZURE_OPENAI_KEY"))
