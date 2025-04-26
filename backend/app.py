@@ -8,25 +8,27 @@ from openai import AzureOpenAI
 from sklearn.metrics.pairwise import cosine_similarity
 import base64
 import io
-from generator import load_generator, generate_images
+
 import cv2
 import torch
 import base64                                       
 
+# — Image Generation imports —
+from generation.generator import load_generator, generate_images
 
-# # — DR detection imports —
-# from model_detection      import load_model, predict
-# from preprocess_detection import preprocess_image
+# — DR detection imports —
+from detection.model_detection      import load_model, predict, build_advanced_rsg_net
+from detection.preprocess_detection import preprocess_image
+from tensorflow.keras.models import load_model as keras_load_model
+from keras.models import load_model
+
+# — vessel mapping import —
+from vessel_map.model import DARes2UNet
+from vessel_map.preprocessing import preprocess_image
 
 # import sys
 # from tensorflow import keras
 # from tensorflow.keras.models import functional as functional_module
-
-# — vessel mapping import —
-from model import DARes2UNet
-from preprocessing import preprocess_image
-
-
 
 # # Make “keras.src.models.functional” resolve to TF-Keras’s functional module:
 # sys.modules['keras']                       = keras
@@ -35,22 +37,12 @@ from preprocessing import preprocess_image
 # sys.modules['keras.src.models.functional'] = functional_module
 
 # from tensorflow.keras.models import load_model as keras_load_model
-# print("Loading DR model…")
-# dr_model = keras_load_model("best_model.keras")
-# print("✅ DR model ready!")
+
 
 # import os
 # import gdown
 
-# # Directory where the model should be
-# model_path = "backend/generation/dr_model.pkl"
 
-# # If the model doesn't exist, download it
-# if not os.path.exists(model_path):
-#     print("Downloading dr_model.pkl...")
-#     url = "https://drive.google.com/uc?id=YOUR_FILE_ID"
-#     gdown.download(url, model_path, quiet=False)
-    
 # Debug prints
 print("API Key:", os.getenv("AZURE_OPENAI_KEY"))
 print("Endpoint:", os.getenv("AZURE_OPENAI_ENDPOINT"))
@@ -63,14 +55,18 @@ client = AzureOpenAI(
     api_version="2025-01-01-preview"
 )
 
-# Load embeddings and texts
-embedding_matrix = np.load("dr_embeddings.npy")
-with open("dr_texts.pkl", "rb") as f:
-    texts = pickle.load(f)
+# # Directory where the model should be
+# model_path = "backend/generation/dr_model.pkl"
 
-# Load generators at startup
+# # If the model doesn't exist, download it
+# if not os.path.exists(model_path):
+#     print("Downloading dr_model.pkl...")
+#     url = "https://drive.google.com/uc?id=YOUR_FILE_ID"
+#     gdown.download(url, model_path, quiet=False)
+
+# Load image generation at startup
+print("Loading image generation model...")
 try:
-    print("Loading image generators...")
     G_no_dr = load_generator('./generation/no_dr_model.pkl')
     G_dr = load_generator('./generation/dr_model.pkl')
     print("Image generators loaded successfully!")
@@ -79,17 +75,31 @@ except Exception as e:
     G_no_dr = None
     G_dr = None
 
-# Initialize model
+# Load vessel mapping at startup
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 vessel_model = DARes2UNet().to(device)
+print("Loading vessel mapping model...")
 try:
-    vessel_model.load_state_dict(torch.load('best_model.pth', map_location=device))
+    vessel_model.load_state_dict(torch.load('./vessel_map/best_model.pth', map_location=device))
     vessel_model.eval()
     print("Vessel mapping model loaded successfully!")
 except Exception as e:
     print(f"Error loading vessel mapping model: {e}")
     vessel_model = None
 
+print("Loading DR detection model...")
+try:
+    dr_model = load_model("./detection/best_model.keras")
+    print("DR detection model loaded successfully!")
+except Exception as e:
+    print(f"Error loading DR detection model: {e}")
+    dr_model = None
+
+# Load embeddings and texts
+embedding_matrix = np.load("./chatbot/dr_embeddings.npy")
+with open("./chatbot/dr_texts.pkl", "rb") as f:
+    texts = pickle.load(f)
+    
 def embed_query(text):
     """Get embedding for query text"""
     response = client.embeddings.create(
@@ -234,53 +244,58 @@ def generate_vessel_map():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# @app.route("/detect", methods=["POST"])
-# @cross_origin()   # ensure CORS header even on failures
-# def detect():
-#     if dr_model is None:
-#         return jsonify(error="DR model not initialized"), 500
+@app.post("/detect")
+def detect():
+    """Endpoint to detect DR from a retinal image"""
+    if dr_model is None:
+        return jsonify({"error": "DR model not initialized"}), 500
 
-#     if "image" not in request.files:
-#         return jsonify(error="No file part"), 400
+    if "image" not in request.files:
+        return jsonify({"error": "No image provided"}), 400
 
-#     # 1) Decode upload
-#     file = request.files["image"]
-#     arr  = np.frombuffer(file.read(), dtype=np.uint8)
-#     img  = cv2.imdecode(arr, cv2.IMREAD_COLOR)
-#     if img is None:
-#         return jsonify(error="Cannot decode image"), 400
+    try:
+        file = request.files["image"]
+        arr = np.frombuffer(file.read(), dtype=np.uint8)
+        img = cv2.imdecode(arr, cv2.IMREAD_COLOR)
 
-#     # 2) Preprocess & quality checks
-#     proc = preprocess_image(img)
-#     if proc is None:
-#         return jsonify(error="Image failed quality checks"), 400
+        if img is None:
+            return jsonify({"error": "Cannot decode image"}), 400
 
-#     # 3) Inference
-#     prob = float(predict(dr_model, proc))  # sigmoid output in [0,1]
+        proc = preprocess_image(img)
+        if proc is None:
+            return jsonify({"error": "Image failed preprocessing checks"}), 400
 
-#     # 4) Build response fields
-#     prediction = "DR Detected" if prob >= 0.5 else "No DR Detected"
-#     confidence = prob if prob >= 0.5 else 1 - prob
+        prob = float(predict(dr_model, proc))  # Sigmoid output
 
-#     severity = None
-#     if prob >= 0.5:
-#         if prob < 0.6: severity = "Mild NPDR"
-#         elif prob < 0.8: severity = "Moderate NPDR"
-#         else: severity = "Severe NPDR"
+        prediction = "DR Detected" if prob >= 0.5 else "No DR Detected"
+        confidence = prob if prob >= 0.5 else 1 - prob
 
-#     features = [
-#         "Microaneurysms",
-#         "Dot & blot hemorrhages",
-#         "Hard exudates",
-#         "Cotton wool spots"
-#     ] if prob >= 0.5 else []
+        severity = None
+        if prob >= 0.5:
+            if prob < 0.6:
+                severity = "Mild NPDR"
+            elif prob < 0.8:
+                severity = "Moderate NPDR"
+            else:
+                severity = "Severe NPDR"
 
-#     return jsonify({
-#         "prediction": prediction,
-#         "confidence": round(confidence, 3),
-#         "severity": severity,
-#         "features": features
-#     })
+        features = [
+            "Microaneurysms",
+            "Dot & blot hemorrhages",
+            "Hard exudates",
+            "Cotton wool spots"
+        ] if prob >= 0.5 else []
+
+        return jsonify({
+            "prediction": prediction,
+            "confidence": round(confidence, 3),
+            "severity": severity,
+            "features": features
+        })
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
     
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
