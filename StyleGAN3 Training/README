@@ -1,1 +1,27 @@
+StyleGAN3 for Synthetic Fundus Image Generation
+This repository contains the code and training configurations for generating synthetic retina fundus images using StyleGAN3.
 
+We trained two separate StyleGAN3 models:
+DR model: trained on images with diabetic retinopathy (DR) signs.
+NoDR model: trained on images without diabetic retinopathy (NoDR).
+
+Datasets
+The following public datasets were used for training:
+- Aptos
+- EyePAC
+- Messidor 2
+- IDRiD
+- DDR
+Approximately 11,000 images per class were prepared after preprocessing.
+
+Model and Training Details
+Both DR and NoDR models were trained with the following configuration:
+- Model: stylegan3-t
+- Batch Size: 32
+- Adaptive Augmentation Target: 0.4
+- Gamma: 8.2
+- Generator Learning Rate: 0.002
+- Discriminator Learning Rate: 0.002
+- Training Length: ~760 kimg (thousands of images)
+
+Note: The StyleGAN3 model trained on NoDR images was further fine-tuned using a different set of hyperparameters to improve generation quality.
