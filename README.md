@@ -22,7 +22,7 @@ The website consists of:
    docker --version
    docker compose version
 
-   ✅ You should see the versions.
+✅ You should see the versions.
 
 2. **Clone the Project**
    
@@ -35,10 +35,10 @@ The website consists of:
    ```bash
    docker-compose up --build
    
-   This will:
-   - Build the backend container (Flask app with AI models)
-   - Build the frontend container (Next.js website)
-   - Start both containers immediately after building
+This will:
+- Build the backend container (Flask app with AI models)
+- Build the frontend container (Next.js website)
+- Start both containers immediately after building
 
 ⏳ Note: The first build may take 5–10 minutes depending on your internet speed.
 
