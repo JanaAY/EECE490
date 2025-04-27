@@ -8,9 +8,12 @@ import Footer from "@/components/footer"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata = {
-  title: "Diabetic Retinopathy Research Portal",
+  title: "RETINALAB",
   description: "Advanced platform for diabetic retinopathy research, detection, and analysis",
-  generator: "v0.dev"
+  generator: "v0.dev",
+  icons: {
+    icon: "/eye.svg",
+  }
 }
 
 export default function RootLayout({

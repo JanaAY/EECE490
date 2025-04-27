@@ -160,7 +160,7 @@ def generate():
         dr_count = int(request.json.get("dr_count", 0))
         no_dr_count = int(request.json.get("no_dr_count", 0))
 
-        if dr_count < 0 or no_dr_count < 0 or dr_count + no_dr_count > 100:
+        if dr_count < 0 or no_dr_count < 0 or dr_count + no_dr_count > 2000:
             return jsonify({"error": "Invalid image counts"}), 400
 
         # Generate images
