@@ -21,3 +21,33 @@ The website consists of:
    ```bash
    docker --version
    docker compose version
+
+   ✅ You should see the versions.
+
+2. **Clone the Project**
+   
+   ```bash
+   git clone https://github.com/JanaAY/EECE490.git
+   cd EECE490
+
+3. **Build the Containers**
+   
+   ```bash
+   docker-compose build --no-cache
+   
+This will:
+
+Build the backend container (Flask app with AI models)
+
+Build the frontend container (Next.js website)
+
+⏳ First build may take ~5-10 minutes because it installs all libraries.
+
+4. **Run the Website**
+   
+   ```bash
+   docker-compose up
+
+Backend Flask server will run on http://localhost:5000
+
+Frontend website will run on http://localhost:3000
