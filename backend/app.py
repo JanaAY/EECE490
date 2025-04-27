@@ -10,7 +10,10 @@ import base64
 import io
 import cv2
 import torch
-import base64                                       
+import base64         
+import os
+import gdown
+import shutil                              
 
 # — Image Generation imports —
 from generation.generator import load_generator, generate_images
@@ -37,14 +40,37 @@ client = AzureOpenAI(
     api_version="2025-01-01-preview"
 )
 
-# # Directory where the model should be
-# model_path = "backend/generation/dr_model.pkl"
 
-# # If the model doesn't exist, download it
-# if not os.path.exists(model_path):
-#     print("Downloading dr_model.pkl...")
-#     url = "https://drive.google.com/uc?id=YOUR_FILE_ID"
-#     gdown.download(url, model_path, quiet=False)
+import os
+import gdown
+import shutil
+
+# === Step 1: Google Drive Folder ID https://drive.google.com/drive/folders/1WpuP8xXWLH86M2yGg41EZ7fzRk1xpKY8?usp=sharing
+folder_id = "1WpuP8xXWLH86M2yGg41EZ7fzRk1xpKY8"
+target_folder = "generation"
+
+# === Step 2: Ensure generation/ exists
+os.makedirs(target_folder, exist_ok=True)
+
+# === Step 3: Download folder to temp
+temp_folder = "temp_generation"
+gdown.download_folder(id=folder_id, output=temp_folder, quiet=False, use_cookies=False)
+
+# === Step 4: Move each .pkl file if missing
+for file in os.listdir(temp_folder):
+    if file.endswith(".pkl"):
+        src = os.path.join(temp_folder, file)
+        dst = os.path.join(target_folder, file)
+        if not os.path.exists(dst):
+            print(f"Copying {file} to {target_folder}")
+            shutil.move(src, dst)
+        else:
+            print(f"{file} already exists in {target_folder}, skipping.")
+
+# === Step 5: Clean up temp
+shutil.rmtree(temp_folder)
+print("✅ All files are ready inside 'generation/'!")
+
 
 # Load image generation at startup
 print("Loading image generation model...")
