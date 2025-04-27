@@ -270,28 +270,12 @@ def detect():
         prediction = "DR Detected" if prob >= 0.5 else "No DR Detected"
         confidence = prob if prob >= 0.5 else 1 - prob
 
-        severity = None
-        if prob >= 0.5:
-            if prob < 0.6:
-                severity = "Mild NPDR"
-            elif prob < 0.8:
-                severity = "Moderate NPDR"
-            else:
-                severity = "Severe NPDR"
-
-        features = [
-            "Microaneurysms",
-            "Dot & blot hemorrhages",
-            "Hard exudates",
-            "Cotton wool spots"
-        ] if prob >= 0.5 else []
 
         return jsonify({
             "prediction": prediction,
-            "confidence": round(confidence, 3),
-            "severity": severity,
-            "features": features
+            "confidence": round(confidence, 3)
         })
+
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
