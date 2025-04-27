@@ -1,9 +1,10 @@
-import tensorflow as tf
-from tensorflow.keras import layers, models, regularizers
+import numpy as np
 
-# === Build the Advanced RSG-Net model ===
+from tensorflow.keras.models import load_model
+from tensorflow.keras import layers, models, regularizers, Input
+
 def build_advanced_rsg_net(input_shape=(200, 200, 3), num_classes=2):
-    inputs = tf.keras.Input(shape=input_shape)
+    inputs = Input(shape=input_shape)
 
     # === RSG Block 1 ===
     x = layers.Conv2D(32, (3, 3), padding='same', kernel_regularizer=regularizers.l2(0.001))(inputs)
@@ -28,25 +29,20 @@ def build_advanced_rsg_net(input_shape=(200, 200, 3), num_classes=2):
     x = layers.Dense(64, activation='relu', kernel_regularizer=regularizers.l2(0.001))(x)
     x = layers.Dropout(0.3)(x)
 
-    # === Output Layer ===
-    if num_classes == 2:
-        outputs = layers.Dense(1, activation='sigmoid')(x)
-    else:
-        outputs = layers.Dense(num_classes, activation='softmax')(x)
+    # === Output
+    outputs = layers.Dense(1, activation='sigmoid')(x)
 
     model = models.Model(inputs, outputs)
     return model
 
-# === Load the model with trained weights ===
-def load_model(weights_path, input_shape=(200, 200, 3), num_classes=2):
-    model = build_advanced_rsg_net(input_shape=input_shape, num_classes=num_classes)
+# === Updated load function ===
+def load_full_model(weights_path):
+    model = build_advanced_rsg_net(input_shape=(200, 200, 3), num_classes=2)
     model.load_weights(weights_path)
     return model
 
 
 # === Predict function ===
-import numpy as np
-
 def predict(model, img):
     """
     Predicts the class (DR or No_DR) for a preprocessed image.

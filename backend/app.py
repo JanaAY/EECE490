@@ -8,7 +8,6 @@ from openai import AzureOpenAI
 from sklearn.metrics.pairwise import cosine_similarity
 import base64
 import io
-
 import cv2
 import torch
 import base64                                       
@@ -17,10 +16,9 @@ import base64
 from generation.generator import load_generator, generate_images
 
 # — DR detection imports —
-from detection.model_detection      import load_model, predict, build_advanced_rsg_net
-from detection.preprocess_detection import preprocess_image
-from tensorflow.keras.models import load_model as keras_load_model
-from keras.models import load_model
+from detection.model_detection import load_full_model, predict
+from detection.preprocess_detection import preprocess_detection
+from tensorflow import keras
 
 # — vessel mapping import —
 from vessel_map.model import DARes2UNet
@@ -87,13 +85,13 @@ except Exception as e:
     print(f"Error loading vessel mapping model: {e}")
     vessel_model = None
 
+# Load dr detection at startup
 print("Loading DR detection model...")
-try:
-    dr_model = load_model("./detection/best_model.keras")
-    print("DR detection model loaded successfully!")
-except Exception as e:
-    print(f"Error loading DR detection model: {e}")
-    dr_model = None
+# Make sure to point to the .h5 file
+dr_model = load_full_model("./detection/final_trained_model.h5")
+print("DR detection model loaded!")
+
+
 
 # Load embeddings and texts
 embedding_matrix = np.load("./chatbot/dr_embeddings.npy")
@@ -261,11 +259,13 @@ def detect():
         if img is None:
             return jsonify({"error": "Cannot decode image"}), 400
 
-        proc = preprocess_image(img)
+        # 🔥 HERE: PREPROCESS the uploaded image
+        proc = preprocess_detection(img)
         if proc is None:
             return jsonify({"error": "Image failed preprocessing checks"}), 400
 
-        prob = float(predict(dr_model, proc))  # Sigmoid output
+        # 🔥 THEN: Predict
+        prob = float(predict(dr_model, proc))  # sigmoid output
 
         prediction = "DR Detected" if prob >= 0.5 else "No DR Detected"
         confidence = prob if prob >= 0.5 else 1 - prob

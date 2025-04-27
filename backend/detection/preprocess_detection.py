@@ -22,7 +22,7 @@ def auto_flip_if_left_eye(img):
     return img
 
 # === Full Preprocessing ===
-def preprocess_image(img, target_size=(200, 200)):  # 🔥 Changed to 200x200
+def preprocess_detection(img, target_size=(200, 200)):  # 🔥 Changed to 200x200
     if img is None or len(img.shape) != 3 or img.shape[2] != 3:
         return None
 
