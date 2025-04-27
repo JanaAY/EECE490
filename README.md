@@ -22,7 +22,7 @@ The website consists of:
    docker --version
    docker compose version
 
-   ✅ You should see the versions.
+✅ You should see the versions.
 
 2. **Clone the Project**
    
