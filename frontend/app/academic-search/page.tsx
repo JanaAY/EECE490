@@ -1,87 +1,151 @@
 "use client"
 
-import type React from "react"
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Search, FileText, Download, ExternalLink, Loader2, BookOpen } from "lucide-react"
+import { Search, FileText, ExternalLink, Loader2, BookOpen } from "lucide-react"
+import { toast } from "sonner"
+
+const SUGGESTIONS = [
+  "diabetic retinopathy",
+  "retinal vessel segmentation",
+  "early detection of DR",
+  "fundus imaging AI",
+  "eye disease biomarkers",
+  "DR grading",
+]
 
 export default function AcademicSearchPage() {
   const [searchQuery, setSearchQuery] = useState("")
+  const [sourceTab, setSourceTab] = useState("all")
   const [isSearching, setIsSearching] = useState(false)
   const [searchResults, setSearchResults] = useState<Array<{
     title: string
     authors: string
     journal: string
-    year: number
+    year: string
     abstract: string
     url: string
   }> | null>(null)
 
-  const handleSearch = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (searchQuery.trim().length >= 3) {
+      handleTabSwitchSearch()
+    }
+  }, [sourceTab])
+  
+
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
-
-    if (!searchQuery.trim()) return
-
-    setIsSearching(true)
-
-    // Simulate API call to search engines
-    setTimeout(() => {
-      setIsSearching(false)
-
-      // Mock search results
-      setSearchResults([
-        {
-          title: "Deep Learning for Automated Detection of Diabetic Retinopathy: A Systematic Review",
-          authors: "Johnson M, Chen L, Patel A, et al.",
-          journal: "Journal of Medical Imaging",
-          year: 2023,
-          abstract:
-            "This systematic review evaluates the performance of deep learning algorithms for automated detection of diabetic retinopathy. We analyzed 45 studies published between 2015 and 2022, finding that convolutional neural networks achieve high sensitivity and specificity in DR detection across diverse populations.",
-          url: "#",
-        },
-        {
-          title: "Vessel Segmentation in Retinal Images for Early Detection of Diabetic Retinopathy",
-          authors: "Smith K, Zhang W, Rodriguez J, et al.",
-          journal: "IEEE Transactions on Medical Imaging",
-          year: 2022,
-          abstract:
-            "This paper presents a novel approach to retinal vessel segmentation using a U-Net architecture with attention mechanisms. The proposed method achieves state-of-the-art performance on multiple public datasets and demonstrates improved detection of subtle vascular changes associated with early diabetic retinopathy.",
-          url: "#",
-        },
-        {
-          title: "Clinical Validation of AI-Based Diabetic Retinopathy Screening in Primary Care Settings",
-          authors: "Williams R, Gupta S, Lee H, et al.",
-          journal: "JAMA Ophthalmology",
-          year: 2023,
-          abstract:
-            "This prospective study evaluated the real-world performance of an AI-based diabetic retinopathy screening system across 12 primary care clinics. The system demonstrated 92.5% sensitivity and 94.3% specificity compared to expert grading, with significant reduction in referral wait times.",
-          url: "#",
-        },
-        {
-          title: "Explainable AI for Diabetic Retinopathy Grading: Enhancing Clinical Trust and Adoption",
-          authors: "Garcia N, Thompson B, Kim J, et al.",
-          journal: "Nature Digital Medicine",
-          year: 2022,
-          abstract:
-            "This study introduces an explainable AI framework for diabetic retinopathy grading that provides visual explanations for its decisions. A randomized trial with 42 ophthalmologists showed significantly increased trust and adoption when AI systems provided explanations for their classifications.",
-          url: "#",
-        },
-        {
-          title: "Longitudinal Analysis of Retinal Vascular Changes in Diabetic Patients Using Deep Learning",
-          authors: "Brown T, Nakamura K, Wilson P, et al.",
-          journal: "Diabetes Care",
-          year: 2023,
-          abstract:
-            "This 5-year longitudinal study tracked retinal vascular changes in 1,200 diabetic patients using deep learning analysis. Results show that quantifiable vascular alterations precede clinically detectable diabetic retinopathy by an average of 2.3 years, suggesting potential for earlier intervention.",
-          url: "#",
-        },
-      ])
-    }, 1500)
+    if (searchQuery.trim().length < 3) {
+      toast.error("Please enter at least 3 characters.")
+      return
+    }
+    await fetchResults()
   }
+
+  const handleTabSwitchSearch = async () => {
+    if (searchQuery.trim().length < 3) return
+    await fetchResults()
+  }
+
+  const fetchResults = async () => {
+    setIsSearching(true)
+    setSearchResults(null)
+
+    try {
+      let results = []
+
+      if (sourceTab === "all" || sourceTab === "google-scholar") {
+        const res = await fetch(`https://api.semanticscholar.org/graph/v1/paper/search?query=${encodeURIComponent(searchQuery)}&limit=5&fields=title,authors,year,venue,abstract,url`)
+        const data = await res.json()
+
+        results = data.data.map((paper: any) => ({
+          title: paper.title,
+          authors: paper.authors.map((a: any) => a.name).join(", "),
+          journal: paper.venue || "Unknown",
+          year: paper.year?.toString() || "N/A",
+          abstract: paper.abstract || "No abstract available.",
+          url: paper.url || "#",
+        }))
+      } else if (sourceTab === "pubmed") {
+        const res = await fetch(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${encodeURIComponent(searchQuery)}&retmode=json&retmax=5`)
+        const ids = (await res.json()).esearchresult.idlist
+
+        const summaryRes = await fetch(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=${ids.join(",")}&retmode=json`)
+        const summaryData = await summaryRes.json()
+
+        results = Object.values(summaryData.result)
+          .filter((item: any) => item.uid)
+          .map((item: any) => ({
+            title: item.title,
+            authors: (item.authors || []).map((a: any) => a.name).join(", "),
+            journal: item.source || "PubMed",
+            year: item.pubdate?.split(" ")[0] || "N/A",
+            abstract: "Abstract not available.",
+            url: `https://pubmed.ncbi.nlm.nih.gov/${item.uid}/`
+          }))
+      } else if (sourceTab === "arxiv") {
+        const res = await fetch(`http://export.arxiv.org/api/query?search_query=all:${encodeURIComponent(searchQuery)}&start=0&max_results=5`)
+        const text = await res.text()
+
+        const parser = new DOMParser()
+        const xml = parser.parseFromString(text, "application/xml")
+        const entries = xml.querySelectorAll("entry")
+
+        results = Array.from(entries).map((entry: any) => ({
+          title: entry.querySelector("title")?.textContent || "No title",
+          authors: Array.from(entry.querySelectorAll("author > name")).map((n: any) => n.textContent).join(", "),
+          journal: "arXiv",
+          year: entry.querySelector("published")?.textContent.slice(0, 4) || "N/A",
+          abstract: entry.querySelector("summary")?.textContent || "No abstract",
+          url: entry.querySelector("id")?.textContent || "#",
+        }))
+      }
+
+      setSearchResults(results)
+    } catch (err) {
+      console.error(err)
+      setSearchResults([])
+    } finally {
+      setIsSearching(false)
+    }
+  }
+
+  const exportToCSV = () => {
+    if (!searchResults || searchResults.length === 0) return
+
+    const csvContent = [
+      ["Title", "Authors", "Journal", "Year", "Abstract", "URL"],
+      ...searchResults.map(r => [
+        `"${r.title}"`,
+        `"${r.authors}"`,
+        `"${r.journal}"`,
+        r.year,
+        `"${r.abstract}"`,
+        `"${r.url}"`
+      ])
+    ].map(e => e.join(",")).join("\n")
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+
+    const link = document.createElement("a")
+    link.href = url
+    link.setAttribute("download", "search_results.csv")
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
+  const loadingLabel = {
+    "all": "Searching...",
+    "pubmed": "Searching PubMed...",
+    "google-scholar": "Searching Google Scholar...",
+    "arxiv": "Searching arXiv...",
+  }[sourceTab] || "Searching..."
 
   return (
     <main className="container px-4 md:px-6 py-8">
@@ -89,7 +153,7 @@ export default function AcademicSearchPage() {
         <div className="text-center space-y-2 mb-8">
           <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl text-blue-900">Academic Search</h1>
           <p className="text-gray-600 md:text-lg max-w-2xl mx-auto">
-            Search across multiple academic databases for diabetic retinopathy research
+            Search across PubMed, Google Scholar, and arXiv for diabetic retinopathy research
           </p>
         </div>
 
@@ -99,7 +163,7 @@ export default function AcademicSearchPage() {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
                 <Input
-                  placeholder="Search for diabetic retinopathy research..."
+                  placeholder="Search diabetic retinopathy papers..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9"
@@ -113,7 +177,7 @@ export default function AcademicSearchPage() {
                 {isSearching ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Searching...
+                    Searching
                   </>
                 ) : (
                   "Search"
@@ -123,20 +187,20 @@ export default function AcademicSearchPage() {
           </CardContent>
         </Card>
 
-        <Tabs defaultValue="all" className="w-full">
+        <Tabs defaultValue="all" className="w-full" onValueChange={(value) => setSourceTab(value)}>
           <TabsList className="grid w-full grid-cols-4 mb-6">
-            <TabsTrigger value="all">All Sources</TabsTrigger>
+            <TabsTrigger value="all">All</TabsTrigger>
             <TabsTrigger value="pubmed">PubMed</TabsTrigger>
             <TabsTrigger value="google-scholar">Google Scholar</TabsTrigger>
             <TabsTrigger value="arxiv">arXiv</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="all" className="space-y-6">
+          <TabsContent value={sourceTab} className="space-y-6">
             {isSearching ? (
               <div className="h-[400px] flex items-center justify-center">
                 <div className="text-center space-y-4">
                   <Loader2 className="h-8 w-8 animate-spin mx-auto text-blue-700" />
-                  <p className="text-gray-600">Searching across academic databases...</p>
+                  <p className="text-gray-600">{loadingLabel}</p>
                 </div>
               </div>
             ) : searchResults ? (
@@ -145,12 +209,10 @@ export default function AcademicSearchPage() {
                   <p className="text-sm text-gray-600">
                     Found {searchResults.length} results for "{searchQuery}"
                   </p>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm">
-                      <FileText className="h-4 w-4 mr-2" />
-                      Export Results
-                    </Button>
-                  </div>
+                  <Button variant="outline" size="sm" onClick={exportToCSV}>
+                    <FileText className="h-4 w-4 mr-2" />
+                    Export
+                  </Button>
                 </div>
 
                 {searchResults.map((result, index) => (
@@ -159,29 +221,17 @@ export default function AcademicSearchPage() {
                       <div className="space-y-2">
                         <div className="flex justify-between items-start">
                           <h3 className="font-bold text-lg text-blue-900">{result.title}</h3>
-                          <div className="flex gap-1">
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <Download className="h-4 w-4" />
-                              <span className="sr-only">Download</span>
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <Button variant="ghost" size="icon" asChild>
+                            <a href={result.url} target="_blank" rel="noopener noreferrer">
                               <ExternalLink className="h-4 w-4" />
-                              <span className="sr-only">Open</span>
-                            </Button>
-                          </div>
+                            </a>
+                          </Button>
                         </div>
                         <div className="flex items-center text-sm text-gray-600">
                           <BookOpen className="h-4 w-4 mr-2 text-blue-700" />
-                          <span>
-                            {result.authors} • {result.journal} • {result.year}
-                          </span>
+                          {result.authors} • {result.journal} • {result.year}
                         </div>
                         <p className="text-sm text-gray-700">{result.abstract}</p>
-                        <div className="pt-2">
-                          <Button variant="link" className="p-0 h-auto text-blue-700">
-                            View Full Paper
-                          </Button>
-                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -191,71 +241,13 @@ export default function AcademicSearchPage() {
               <div className="h-[400px] flex items-center justify-center border rounded-lg bg-gray-50">
                 <div className="text-center space-y-2 max-w-md px-4">
                   <Search className="h-12 w-12 text-gray-300 mx-auto" />
-                  <h3 className="text-lg font-medium">Search for Diabetic Retinopathy Research</h3>
+                  <h3 className="text-lg font-medium">Start Searching</h3>
                   <p className="text-sm text-gray-500">
-                    Enter keywords to search across PubMed, Google Scholar, arXiv, and other academic databases
+                    Enter keywords to find diabetic retinopathy papers from PubMed, Scholar, and arXiv.
                   </p>
-                  <div className="pt-4">
-                    <p className="text-xs text-gray-500">Popular searches:</p>
-                    <div className="flex flex-wrap gap-2 justify-center mt-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setSearchQuery("deep learning diabetic retinopathy")}
-                      >
-                        Deep Learning DR
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => setSearchQuery("vessel segmentation retina")}>
-                        Vessel Segmentation
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setSearchQuery("early detection DR biomarkers")}
-                      >
-                        Early Detection
-                      </Button>
-                    </div>
-                  </div>
                 </div>
               </div>
             )}
-          </TabsContent>
-
-          <TabsContent value="pubmed" className="space-y-6">
-            <div className="h-[400px] flex items-center justify-center border rounded-lg bg-gray-50">
-              <div className="text-center space-y-2 max-w-md px-4">
-                <Search className="h-12 w-12 text-gray-300 mx-auto" />
-                <h3 className="text-lg font-medium">Search PubMed</h3>
-                <p className="text-sm text-gray-500">
-                  Search the National Library of Medicine's database of biomedical literature
-                </p>
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="google-scholar" className="space-y-6">
-            <div className="h-[400px] flex items-center justify-center border rounded-lg bg-gray-50">
-              <div className="text-center space-y-2 max-w-md px-4">
-                <Search className="h-12 w-12 text-gray-300 mx-auto" />
-                <h3 className="text-lg font-medium">Search Google Scholar</h3>
-                <p className="text-sm text-gray-500">
-                  Search across a wide variety of academic papers, theses, books, and preprints
-                </p>
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="arxiv" className="space-y-6">
-            <div className="h-[400px] flex items-center justify-center border rounded-lg bg-gray-50">
-              <div className="text-center space-y-2 max-w-md px-4">
-                <Search className="h-12 w-12 text-gray-300 mx-auto" />
-                <h3 className="text-lg font-medium">Search arXiv</h3>
-                <p className="text-sm text-gray-500">
-                  Search for preprints in physics, mathematics, computer science, and more
-                </p>
-              </div>
-            </div>
           </TabsContent>
         </Tabs>
       </div>
