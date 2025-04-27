@@ -45,32 +45,42 @@ import os
 import gdown
 import shutil
 
-# === Step 1: Google Drive Folder ID https://drive.google.com/drive/folders/1WpuP8xXWLH86M2yGg41EZ7fzRk1xpKY8?usp=sharing
+# === Folder + File Info
 folder_id = "1WpuP8xXWLH86M2yGg41EZ7fzRk1xpKY8"
+temp_download_path = "temp_generation"
 target_folder = "generation"
+required_files = ["dr_model.pkl", "no_dr_model.pkl"]
 
-# === Step 2: Ensure generation/ exists
-os.makedirs(target_folder, exist_ok=True)
+# === Check if files already exist
+missing_files = [file for file in required_files if not os.path.exists(os.path.join(target_folder, file))]
 
-# === Step 3: Download folder to temp
-temp_folder = "temp_generation"
-gdown.download_folder(id=folder_id, output=temp_folder, quiet=False, use_cookies=False)
+if not missing_files:
+    print("✅ All required model files already exist in 'generation/'. No download needed.")
+else:
+    print("⚡ Some files missing. Downloading from Google Drive...")
 
-# === Step 4: Move each .pkl file if missing
-for file in os.listdir(temp_folder):
-    if file.endswith(".pkl"):
-        src = os.path.join(temp_folder, file)
-        dst = os.path.join(target_folder, file)
-        if not os.path.exists(dst):
-            print(f"Copying {file} to {target_folder}")
-            shutil.move(src, dst)
-        else:
-            print(f"{file} already exists in {target_folder}, skipping.")
+    # === Step 1: Download to temp
+    gdown.download_folder(id=folder_id, output=temp_download_path, quiet=False, use_cookies=False)
 
-# === Step 5: Clean up temp
-shutil.rmtree(temp_folder)
-print("✅ All files are ready inside 'generation/'!")
+    # === Step 2: Move only missing files
+    os.makedirs(target_folder, exist_ok=True)
 
+    for file in missing_files:
+        found = False
+        for root, dirs, files in os.walk(temp_download_path):
+            if file in files:
+                src_path = os.path.join(root, file)
+                dest_path = os.path.join(target_folder, file)
+                print(f"Moving {file} → {target_folder}")
+                shutil.move(src_path, dest_path)
+                found = True
+                break
+        if not found:
+            print(f"⚠️ Warning: {file} not found in downloaded folder.")
+
+    # === Step 3: Clean up temp
+    shutil.rmtree(temp_download_path)
+    print("Done! ✅")
 
 # Load image generation at startup
 print("Loading image generation model...")
