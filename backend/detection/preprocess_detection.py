@@ -61,7 +61,8 @@ def preprocess_detection(img, target_size=(200, 200)):  # 🔥 Changed to 200x20
     # Resize to 200x200 🔥
     img = cv2.resize(img, target_size, interpolation=cv2.INTER_AREA)
 
-    # Normalize to [-1, 1] 🔥
-    img = img.astype(np.float32) / 127.5 - 1.0
+    # Normalize to [0, 1] 🔥
+    img = img.astype(np.float32) / 255.0
+
 
     return img

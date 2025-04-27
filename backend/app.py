@@ -230,7 +230,6 @@ def generate_vessel_map():
 
 @app.post("/detect")
 def detect():
-    """Endpoint to detect DR from a retinal image"""
     if dr_model is None:
         return jsonify({"error": "DR model not initialized"}), 500
 
@@ -245,26 +244,24 @@ def detect():
         if img is None:
             return jsonify({"error": "Cannot decode image"}), 400
 
-        # 🔥 HERE: PREPROCESS the uploaded image
         proc = preprocess_detection(img)
         if proc is None:
             return jsonify({"error": "Image failed preprocessing checks"}), 400
 
-        # 🔥 THEN: Predict
-        prob = float(predict(dr_model, proc))  # sigmoid output
+        # 🔥 Predict
+        prob = predict(dr_model, proc)  # already float!
 
         prediction = "DR Detected" if prob >= 0.5 else "No DR Detected"
-        confidence = prob if prob >= 0.5 else 1 - prob
-
 
         return jsonify({
             "prediction": prediction,
-            "confidence": round(confidence, 3)
+            "confidence": round(prob, 3)  # DIRECTLY send prob
         })
-
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
 
     
 if __name__ == "__main__":

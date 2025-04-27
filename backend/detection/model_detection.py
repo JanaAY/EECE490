@@ -55,5 +55,5 @@ def predict(model, img):
         float: Probability score for DR.
     """
     img = np.expand_dims(img, axis=0)  # Add batch dimension
-    prob = model.predict(img)[0][0]  # Sigmoid output
+    prob = float(model.predict(img, verbose=0)[0][0])
     return prob
