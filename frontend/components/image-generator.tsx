@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label"
 import { Loader2, Download } from "lucide-react"
 import { toast } from "sonner"
 
-const API_BASE_URL = "https://5bc9-34-169-51-41.ngrok-free.app"
+// LOCAL connection (not ngrok)
+const API_BASE_URL = "http://localhost:5000"
 
 export default function ImageGenerator() {
   const [drCount, setDrCount] = useState(5)
@@ -19,35 +20,38 @@ export default function ImageGenerator() {
   const generate = async () => {
     setLoading(true)
     setFiles(null)
-
+  
     try {
       const res = await fetch(`${API_BASE_URL}/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ num_dr: drCount, num_no_dr: noDrCount })
+        body: JSON.stringify({ dr_count: drCount, no_dr_count: noDrCount }) // <--- BOTH
       })
       const data = await res.json()
-      if (res.ok && Array.isArray(data.files)) {
-        setFiles(data.files)
-        toast.success(`✅ ${data.files.length} images generated`)
+      if (res.ok) {
+        const drFiles = data.dr_images || []
+        const noDrFiles = data.no_dr_images || []
+        setFiles([...drFiles, ...noDrFiles])
+        toast.success(`✅ ${drFiles.length + noDrFiles.length} images generated`)
       } else {
         throw new Error(data.error || "Bad response")
       }
     } catch (err) {
       console.error(err)
-      toast.error("❌ Generation failed — showing placeholders")
+      toast.error("❌ Generation failed")
       setFiles([])
     } finally {
       setLoading(false)
     }
   }
+  
 
   const handleDownloadAll = () => {
     if (!files || files.length === 0) return
-    files.forEach(f => {
+    files.forEach((base64, index) => {
       const link = document.createElement('a')
-      link.href = `${API_BASE_URL}/content/generated_images/${f}`
-      link.download = f
+      link.href = `data:image/png;base64,${base64}`
+      link.download = `generated_image_${index}.png`
       link.click()
     })
   }
@@ -103,12 +107,12 @@ export default function ImageGenerator() {
       {/* Generated Images */}
       {files === null ? null : files.length > 0 ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-          {files.map((f, i) => (
+          {files.map((base64, i) => (
             <Card key={i} className="overflow-hidden">
               <CardContent className="p-2">
                 <img
-                  src={`${API_BASE_URL}/content/generated_images/${f}`}
-                  alt={`retina-${i}`}
+                  src={`data:image/png;base64,${base64}`}
+                  alt={`generated-${i}`}
                   className="w-full aspect-square object-cover rounded"
                 />
               </CardContent>
@@ -116,8 +120,8 @@ export default function ImageGenerator() {
           ))}
         </div>
       ) : (
-        <div className="space-y-2">
-          {/* You can add placeholders if you want here */}
+        <div className="text-center text-gray-500 text-sm">
+          No images yet
         </div>
       )}
 
@@ -135,7 +139,6 @@ export default function ImageGenerator() {
           <p>• <strong>NoDR Images:</strong> 23.29</p>
         </div>
       </div>
-
 
     </div>
   )

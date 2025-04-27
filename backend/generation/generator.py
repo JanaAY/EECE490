@@ -11,7 +11,7 @@ import legacy  # from StyleGAN3's repo
 
 
 # === Load Pre-trained StyleGAN3 Generator ===
-def load_generator(model_path: str, device: str = 'cuda'):
+def load_generator(model_path: str, device: str = 'cpu'):
     """
     Loads a StyleGAN3 generator from a .pkl checkpoint.
 
@@ -34,7 +34,7 @@ def generate_images(
     num_images: int = 10,
     truncation: float = 1.0,
     seed_start: int = None,
-    device: str = 'cuda'
+    device: str = 'cpu'
 ):
     """
     Generates a batch of images from a StyleGAN3 generator.
@@ -58,6 +58,7 @@ def generate_images(
         z = torch.from_numpy(
             np.random.RandomState(seed).randn(1, G.z_dim)
         ).to(device)
+
 
         # Unconditional models ignore label; pass a zero-sized tensor
         label = torch.zeros([1, G.c_dim], device=device)
@@ -94,13 +95,12 @@ def main():
 
     # Save images to disk
     for i, img in enumerate(no_dr_images):
-        img.save(os.path.join(out_dir, 'no_dr', f'no_dr_{i:02d}.png'))
+       img.save(os.path.join(out_dir, 'no_dr', f'no_dr_{i:02d}.png'))
 
     for i, img in enumerate(dr_images):
         img.save(os.path.join(out_dir, 'dr',    f'dr_{i:02d}.png'))
 
     print(f"Generated {len(no_dr_images)} no-DR images and {len(dr_images)} DR images.")
-
 
 if __name__ == '__main__':
     main()

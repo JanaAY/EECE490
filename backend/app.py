@@ -24,22 +24,6 @@ from tensorflow import keras
 from vessel_map.model import DARes2UNet
 from vessel_map.preprocessing import preprocess_image
 
-# import sys
-# from tensorflow import keras
-# from tensorflow.keras.models import functional as functional_module
-
-# # Make “keras.src.models.functional” resolve to TF-Keras’s functional module:
-# sys.modules['keras']                       = keras
-# sys.modules['keras.src']                   = keras
-# sys.modules['keras.src.models']            = keras.models
-# sys.modules['keras.src.models.functional'] = functional_module
-
-# from tensorflow.keras.models import load_model as keras_load_model
-
-
-# import os
-# import gdown
-
 
 # Debug prints
 print("API Key:", os.getenv("AZURE_OPENAI_KEY"))
@@ -64,9 +48,10 @@ client = AzureOpenAI(
 
 # Load image generation at startup
 print("Loading image generation model...")
+device = 'cpu'  # Force CPU
 try:
-    G_no_dr = load_generator('./generation/no_dr_model.pkl')
-    G_dr = load_generator('./generation/dr_model.pkl')
+    G_no_dr = load_generator('./generation/no_dr_model.pkl', device=device)
+    G_dr = load_generator('./generation/dr_model.pkl', device=device)
     print("Image generators loaded successfully!")
 except Exception as e:
     print(f"Error loading generators: {e}")
@@ -145,7 +130,8 @@ def ask_gpt_with_context(query, top_k=3):
 
 # Initialize Flask app
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}})
+
 
 @app.post("/chat")
 def chat():
@@ -166,37 +152,37 @@ def chat():
 
 @app.post("/generate")
 def generate():
-    """Endpoint to generate DR and non-DR images"""
+    """Endpoint to generate DR and No-DR images"""
     if G_dr is None or G_no_dr is None:
         return jsonify({"error": "Image generators not initialized"}), 500
-        
+
     try:
         dr_count = int(request.json.get("dr_count", 0))
-        #non_dr_count = int(request.json.get("non_dr_count", 0))
-        non_dr_count = 0
+        no_dr_count = int(request.json.get("no_dr_count", 0))
 
-
-        if dr_count < 0 or non_dr_count < 0 or dr_count + non_dr_count > 100:
+        if dr_count < 0 or no_dr_count < 0 or dr_count + no_dr_count > 100:
             return jsonify({"error": "Invalid image counts"}), 400
-        
+
         # Generate images
         dr_images = generate_images(G_dr, num_images=dr_count) if dr_count > 0 else []
-        non_dr_images = generate_images(G_no_dr, num_images=non_dr_count) if non_dr_count > 0 else []
-        
+        no_dr_images = generate_images(G_no_dr, num_images=no_dr_count) if no_dr_count > 0 else []
+
         # Convert to base64
         def img_to_base64(img):
             buffered = io.BytesIO()
             img.save(buffered, format="PNG")
             return base64.b64encode(buffered.getvalue()).decode()
-            
+
         response = {
             "dr_images": [img_to_base64(img) for img in dr_images],
-            "non_dr_images": [img_to_base64(img) for img in non_dr_images]
+            "no_dr_images": [img_to_base64(img) for img in no_dr_images]
         }
-        
+
         return jsonify(response)
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 @app.post("/vessel-map")
 def generate_vessel_map():
