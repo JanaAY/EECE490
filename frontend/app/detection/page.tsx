@@ -132,7 +132,8 @@ export default function DetectionPage() {
                   )}
 
                   {/* About Section */}
-                  <div className="bg-blue-50 rounded-md p-4 mt-4">
+                  <div className="flex justify-center">
+                    <div className="bg-blue-50 rounded-md p-6 max-w-2xl text-center">
                     <h3 className="text-sm font-medium text-blue-800">About Our DR Detection</h3>
                     <p className="text-xs text-blue-700">
                       Our detection system is powered by the <strong>RSGNet</strong> model,
@@ -140,6 +141,7 @@ export default function DetectionPage() {
                       The model achieved a <strong>75% validation accuracy</strong> during evaluation.
                       Further improvements are ongoing in collaboration with medical specialists to enhance diagnostic reliability.
                     </p>
+                  </div>
                   </div>
                 </CardContent>
               </Card>
