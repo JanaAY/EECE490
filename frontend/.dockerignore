@@ -1,0 +1,14 @@
+node_modules/
+.next/
+out/
+dist/
+*.log
+*.env
+.env.*
+.vscode/
+.idea/
+.git/
+.gitignore
+coverage/
+npm-debug.log
+yarn-error.log
