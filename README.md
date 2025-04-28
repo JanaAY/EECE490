@@ -194,7 +194,9 @@ This will:
 
    - Frontend: http://localhost:3000 (Main website)
    - Backend API: http://localhost:5000 (Flask server)
-  
+
+⚠️ Important Note
+If the generation models (dr_model.pkl and no_dr_model.pkl) are missing inside the backend/generation/ folder, please download them manually from this Google Drive link and place them in backend/generation/. https://drive.google.com/drive/folders/1WpuP8xXWLH86M2yGg41EZ7fzRk1xpKY8?usp=sharing
 
 ## ⚡ Alternative Manual Setup (if Docker does not work)
 
