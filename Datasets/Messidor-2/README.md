@@ -81,15 +81,6 @@ _Reference for distribution: [Messidor-2 on Kaggle](https://www.kaggle.com/datas
 
 ---
 
-## 🖼️ Before vs. After Preprocessing
-
-| Original Image (Before)                              | Processed Image (After)                         |
-|------------------------------------------------------|-------------------------------------------------|
-| ![Before Preprocessing](images/20060530_55837_0100_PP1.png)  | ![After Preprocessing](images/20060530_55837_0100_PP.jpeg) |
-
-> _A comparison between a raw fundus image (left) and the same image after preprocessing (right), showing border removal, glare removal, CLAHE enhancement, and resizing._
-
----
 
 ## 📚 Acknowledgment
 
