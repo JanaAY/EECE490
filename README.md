@@ -52,21 +52,19 @@ This will:
 
 If you face any issues with Docker, you can run frontend and backend manually in two separate terminals:
 
-🖥️ Terminal 1: Backend (Flask)
-   ```bash
-   cd backend
-   pip install -r requirements.txt
-   python app.py
-
+   1. 🖥️ Terminal 1: Backend (Flask)
+      ```bash
+      cd backend
+      pip install -r requirements.txt
+      python app.py
 
 ✅ This will start the backend server on http://localhost:5000
 
-🖥️ Terminal 2: Frontend (Next.js)
-   ```bash
-   cd frontend
-   npm install
-   npm run dev
-
+   2. 🖥️ Terminal 2: Frontend (Next.js)
+      ```bash
+      cd frontend
+      npm install
+      npm run dev
 
 ✅ This will start the frontend development server on http://localhost:3000
 
