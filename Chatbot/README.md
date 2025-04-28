@@ -54,5 +54,5 @@ This repository contains the code for a **Diabetic Retinopathy (DR) Research Ass
    ```bash
    pip install -r requirements.txt
 
-## Disclaimer
+## ⚠️ Disclaimer
 This chatbot is intended for informational and educational purposes only. It does not provide professional advice, medical diagnosis, or treatment recommendations. Users should verify any critical information independently and consult qualified professionals when necessary.
