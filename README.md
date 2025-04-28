@@ -126,7 +126,7 @@ Whether you're a **data scientist**, **ophthalmologist**, or **researcher**, Ret
 2. **Res2Net**: [https://arxiv.org/abs/1904.01169](https://arxiv.org/abs/1904.01169)  
 3. **Dual Attention Network**: [https://arxiv.org/abs/1809.02983](https://arxiv.org/abs/1809.02983)  
 4. **DropBlock Regularization**: [https://arxiv.org/abs/1810.12890](https://arxiv.org/abs/1810.12890)  
-5. **GPT-4o**: [https://openai.com](https://openai.com)  
+5. **GPT-4o-mini**: [https://openai.com](https://openai.com)  
 6. **Datasets**: EyePACS, DDR, APTOS, Messidor-2, IDRiD, DRIVE, CHASEDB1, ARIA, HRF, FIVE.
 
 ---
