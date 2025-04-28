@@ -224,3 +224,7 @@ If you face any issues with Docker, you can run frontend and backend manually in
 
 **Make sure to clone our website branch!**
 
+## 🎥 Demo Video
+
+[![Watch the Demo](https://img.youtube.com/vi/abcd1234/maxresdefault.jpg)](https://youtu.be/Sbvax9-YqgU?si=5FDmW8J3QSC59uP_)
+
