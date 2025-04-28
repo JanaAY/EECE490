@@ -15,5 +15,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy backend code
 COPY backend/ .
 
+# Clone StyleGAN3 code directly into the app
+RUN git clone https://github.com/NVlabs/stylegan3.git stylegan3
+
 # Run the app
 CMD ["python", "app.py"]
