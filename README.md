@@ -19,6 +19,8 @@ The website consists of:
    - Confirm installation:
    
    ```bash
+   Copy
+   Edit
    docker --version
    docker compose version
 
@@ -27,12 +29,16 @@ The website consists of:
 2. **Clone the Project**
    
    ```bash
+   Copy
+   Edit
    git clone --branch website --single-branch https://github.com/JanaAY/EECE490.git
    cd EECE490
 
 3. **Build and Run the Website**
 
    ```bash
+   Copy
+   Edit
    docker-compose up --build
    
 This will:
@@ -52,21 +58,23 @@ This will:
 
 If you face any issues with Docker, you can run frontend and backend manually in two separate terminals:
 
-🖥️ Terminal 1: Backend (Flask)
-   ```bash
-   cd backend
-   pip install -r requirements.txt
-   python app.py
+   🖥️ Terminal 1: Backend (Flask)
+      ```bash
+      Copy
+      Edit
+      cd backend
+      pip install -r requirements.txt
+      python app.py
 
 ✅ This will start the backend server on http://localhost:5000
 
-🖥️ Terminal 2: Frontend (Next.js)
-   ```bash
-   Copy
-   Edit
-   cd frontend
-   npm install
-   npm run dev
+   🖥️ Terminal 2: Frontend (Next.js)
+      ```bash
+      Copy
+      Edit
+      cd frontend
+      npm install
+      npm run dev
 
 ✅ This will start the frontend development server on http://localhost:3000
 
