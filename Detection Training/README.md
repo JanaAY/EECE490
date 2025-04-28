@@ -61,14 +61,6 @@ This project utilizes **[RETFound_MAE](https://huggingface.co/open-eye/RETFound_
 - **Platform**: Google Colab (single GPU)  
 - **Frameworks**: PyTorch, Hugging Face Transformers  
 
-### 1. Clone & Setup
-```bash
-git clone https://github.com/rmaphoh/RETFound_MAE.git
-cd RETFound_MAE
-pip install -r requirement.txt
-pip install huggingface_hub
-huggingface-cli login
-
 ---
 ## 🔧 Key Hyperparameters
 
@@ -111,6 +103,109 @@ Despite leveraging a specialized model architecture and robust preprocessing tec
 
 ---
 
+## 🏗️ Model Architecture (Advanced RSG-Net)
+
+For the **second approach**, we utilized a **custom-built Advanced RSG-Net** architecture designed for **binary classification (DR vs No_DR)**. 
+
+### 🔍 Architecture Overview:
+
+- **Input**: `200x200x3` fundus images  
+- **Convolutional Blocks**:
+  - **Block 1**:
+    - 2x Conv2D layers with **32 filters** each, kernel size `(3,3)`, followed by **ReLU activations** and **L2 regularization (0.001)**.
+    - **MaxPooling2D** for downsampling.
+  - **Block 2**:
+    - 1x Conv2D layer with **64 filters**, followed by another Conv2D with **128 filters**, both with `(3,3)` kernels, **ReLU activations**, and **L2 regularization (0.001)**.
+    - **MaxPooling2D** applied.
+
+- **Global Average Pooling**:
+  - Reduces spatial dimensions while retaining features.
+  
+- **Fully Connected Layers**:
+  - **Dense Layer** with **128 units**, **ReLU**, **Batch Normalization**, and **Dropout (0.5)**.
+  - **Dense Layer** with **64 units**, **ReLU**, and **Dropout (0.3)**.
+
+- **Output Layer**:
+  - **Single neuron** with **sigmoid activation** for binary classification (DR vs No_DR).
+
+### 🧪 Why This Architecture?
+
+- **Multi-level feature extraction** through stacked convolutional layers with increasing filter sizes.  
+- **Regularization** (L2 penalties + Dropout layers) to prevent overfitting.  
+- **Batch Normalization** improves convergence and model stability.  
+- Designed to be **lightweight** yet effective for fundus image analysis.
+
+---
+
+## ⚙️ Hyperparameters
+
+- **Input size**: `(200, 200, 3)`
+- **Optimizer**: `Adam`
+- **Loss Function**: `binary_crossentropy`
+- **Metrics**: `accuracy`, `AUC`
+- **Batch Size**: `32`
+- **Epochs**: `30`
+- **Regularization**:
+  - **L2 (weight decay)**: `0.001`
+  - **Dropout**: `0.5` (Dense 128), `0.3` (Dense 64)
+
+---
+
+## 🧹 Preprocessing Pipeline
+
+- **Image Sourcing**: Combined images from **EyePACS**, **DDR**, **APTOS**, and **IDRiD** datasets.
+- **Merging Labels**: Standardized all dataset labels into a unified Excel sheet.
+- **Image Cleaning**:
+  - Renamed all images with a consistent naming scheme.
+  - Resized all images to **200x200**.
+  - Applied **Gaussian blurring** and **denoising**.
+  - Normalized pixel values to **[-1, 1]**.
+
+- **Dataset Structuring**:
+  - Split into **5 classes (0-4)** for DR severity.
+  - Applied a **70/10/20 train/val/test split**.
+
+- **Data Augmentation**:
+  - Balanced dataset with **7,000 train**, **1,000 val**, **2,000 test** images **per class**.
+  - Applied transformations like:
+    - **Rotation**, **flipping (horizontal/vertical)**, **zooming**, **brightness**, **color**, **contrast adjustments**.
+
+- **Binary Re-Structuring**:
+  - Reorganized for **binary classification**:
+    - **Class 0**: Healthy (No_DR).
+    - **Class 1**: All DR cases (mild to proliferative).
+
+---
+
+## 📊 Results
+
+- **Validation Accuracy**: **75%**  
+- **Compared to First Approach**:
+  - Improved from **65%** (first approach using RETFound_MAE) to **75%** with **Advanced RSG-Net**.
+
+---
+
+## 🚧 Limitations & Next Steps
+
+Despite the **10% accuracy boost**, the **75% validation accuracy** is **still suboptimal** for clinical deployment. Further steps needed:
+
+- **Enhancing data augmentation** for better generalization.  
+- **Hyperparameter tuning**: Exploring different learning rates, optimizers, and regularization techniques.  
+- **Exploring advanced architectures** like:
+  - **EfficientNet**, **Swin Transformers**, or **ensemble models**.
+
+---
+
+## 📚 References
+
+1. **EyePACS Dataset**: [https://www.kaggle.com/c/diabetic-retinopathy-detection](https://www.kaggle.com/c/diabetic-retinopathy-detection)
+2. **DDR Dataset**: [https://arxiv.org/abs/1812.07041](https://arxiv.org/abs/1812.07041)
+3. **APTOS Dataset**: [https://www.kaggle.com/c/aptos2019-blindness-detection](https://www.kaggle.com/c/aptos2019-blindness-detection)
+4. **IDRiD Dataset**: [https://ieee-dataport.org/open-access/indian-diabetic-retinopathy-image-dataset-idrid](https://ieee-dataport.org/open-access/indian-diabetic-retinopathy-image-dataset-idrid)
+
+---
+
+⚠️ **Disclaimer**: This is the **second approach** to DR detection using **Advanced RSG-Net**. The model shows improvement but **requires further enhancement** before being considered for **deployment**.
 
 
 
