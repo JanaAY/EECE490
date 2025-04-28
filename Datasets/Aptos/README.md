@@ -54,11 +54,11 @@ _Total images: 3662_
 
 ## 🖼️ Sample Images from the Dataset
 
-| No DR (Class 0)                          | Mild DR (Class 1)                          |
+| Sample Image 1                            | Sample Image 2                             |
 |-------------------------------------------|--------------------------------------------|
-| ![No DR](images/no_dr.png)                | ![Mild DR](images/mild_dr.png)             |
+| ![No DR](images/00cc2b75cddd.png)         | ![Mild DR](images/002c21358ce6.png)        |
 
-> _Sample retinal fundus images. Left: Healthy retina (No DR). Right: Mild DR with subtle microaneurysms._
+> _Sample retinal fundus images from the dataset.
 
 ---
 
