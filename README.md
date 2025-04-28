@@ -226,6 +226,7 @@ If you face any issues with Docker, you can run frontend and backend manually in
 
 ## 🎥 Demo Video
 
-[![Watch the demo](https://img.youtube.com/vi/si=5FDmW8J3QSC59uP_/maxresdefault.jpg)](https://www.youtube.com/watch?v=si=5FDmW8J3QSC59uP_)
+[![Watch the Demo](https://img.youtube.com/vi/Sbvax9-YqgU/maxresdefault.jpg)](https://www.youtube.com/watch?v=Sbvax9-YqgU)
+
 
 
