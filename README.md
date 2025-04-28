@@ -74,4 +74,6 @@ If you face any issues with Docker, you can run frontend and backend manually in
 - If running manually, start backend first, then the frontend.
 - In manual mode, the backend and frontend will still communicate normally through localhost ports.
 
+## 🎥 Demo Video
 
+[![Watch the Demo](https://img.youtube.com/vi/Sbvax9-YqgU/maxresdefault.jpg)](https://www.youtube.com/watch?v=Sbvax9-YqgU)
