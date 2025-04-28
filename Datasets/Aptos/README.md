@@ -68,4 +68,36 @@ I would like to acknowledge the **Asia Pacific Tele-Ophthalmology Society (APTOS
 
 For more details, visit the [APTOS 2019 Blindness Detection Competition](https://www.kaggle.com/competitions/aptos2019-blindness-detection).
 
+---
+---
+
+## 🛠️ Preprocessing Pipeline Overview
+
+1. **Mount Google Drive:** Accessed dataset and saved processed images directly to Drive.
+
+2. **Image Format Conversion:** Converted `.png` to `.jpeg`.
+
+3. **Image Cleaning & Quality Filtering:**
+   - Removed blurry, dark, annotated, or glare-affected images.
+   - Standardized image orientation (auto-flip left eyes).
+   - Enhanced contrast with **CLAHE**.
+   - Resized to **512x512** pixels and normalized.
+
+4. **Class Distribution Analysis:** Verified label consistency after cleaning.
+
+5. **Dataset Balancing:**
+   - Binary labels: `No DR` (0) and `DR` (1).
+   - Balanced the dataset via undersampling.
+
+6. **Organized Dataset Structure:**
+   - Created **unbalanced** and **balanced** splits.
+   - Organized images into `DR/` and `NoDR/` folders.
+
+7. **Generated CSVs:**
+   - `train_cleaned.csv`, `train_unbalanced_split.csv`, `train_balanced.csv`.
+
+---
+
+
+
 
