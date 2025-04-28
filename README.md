@@ -46,4 +46,34 @@ This will:
 
    - Frontend: http://localhost:3000 (Main website)
    - Backend API: http://localhost:5000 (Flask server)
+  
+
+## ⚡ Alternative Manual Setup (if Docker does not work)
+
+If you face any issues with Docker, you can run frontend and backend manually in two separate terminals:
+
+🖥️ Terminal 1: Backend (Flask)
+   ```bash
+   cd backend
+   pip install -r requirements.txt
+   python app.py
+
+✅ This will start the backend server on http://localhost:5000
+
+🖥️ Terminal 2: Frontend (Next.js)
+   ```bash
+   Copy
+   Edit
+   cd frontend
+   npm install
+   npm run dev
+
+✅ This will start the frontend development server on http://localhost:3000
+
+⚙️ Notes
+- Make sure you have Python 3.10+ installed.
+- Make sure you have Node.js 18+ installed for the frontend.
+- If running manually, start backend first, then the frontend.
+- In manual mode, the backend and frontend will still communicate normally through localhost ports.
+
 
