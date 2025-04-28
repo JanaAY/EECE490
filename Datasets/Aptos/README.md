@@ -98,6 +98,15 @@ For more details, visit the [APTOS 2019 Blindness Detection Competition](https:/
 
 ---
 
+---
+
+## 🖼️ Before vs. After Preprocessing
+
+| Original Image (Before)                      | Processed Image (After)                   |
+|----------------------------------------------|-------------------------------------------|
+| ![Before Preprocessing](images/0a4e1a29ffff.png) | ![After Preprocessing](images/0a4e1a29ffff.jpeg) |
+
+> _Visual comparison between a raw fundus image (left) and the same image after undergoing preprocessing steps including glare removal, border cropping, CLAHE enhancement, and resizing (right)._
 
 
 
