@@ -94,7 +94,7 @@ _Total images: 1790_
 
 | Original Image (Before)                      | Processed Image (After)                   |
 |----------------------------------------------|-------------------------------------------|
-| ![Before Preprocessing](images/007-0004-000.jpg) | ![After Preprocessing](007-0004-000.jpeg) |
+| ![Before Preprocessing](images/007-0004-000.jpg) | ![After Preprocessing](images/007-0004-000.jpeg) |
 
 > _A comparison between a raw fundus image (left) and the same image after preprocessing steps (right), showing border removal, contrast enhancement, and glare filtering._
 
