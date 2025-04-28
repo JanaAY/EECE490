@@ -91,6 +91,8 @@ The following pretrained weights are attached for **further fine-tuning** or **i
 
 - **No_DR Model**: `no_dr_model.pkl`
 - **DR Model**: `dr_model.pkl`
+- you can fing them on teh following link: https://drive.google.com/drive/folders/1WpuP8xXWLH86M2yGg41EZ7fzRk1xpKY8?usp=drive_link
+  
 
 ---
 
