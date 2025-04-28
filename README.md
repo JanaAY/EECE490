@@ -27,7 +27,7 @@ The website consists of:
 2. **Clone the Project**
    
    ```bash
-   git clone https://github.com/JanaAY/EECE490.git
+   git clone --branch website --single-branch https://github.com/JanaAY/EECE490.git
    cd EECE490
 
 3. **Build and Run the Website**
