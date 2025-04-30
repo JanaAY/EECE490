@@ -40,48 +40,6 @@ client = AzureOpenAI(
     api_version="2025-01-01-preview"
 )
 
-
-import os
-import gdown
-import shutil
-
-# === Folder + File Info
-folder_id = "1WpuP8xXWLH86M2yGg41EZ7fzRk1xpKY8"
-temp_download_path = "temp_generation"
-target_folder = "generation"
-required_files = ["dr_model.pkl", "no_dr_model.pkl"]
-
-# === Check if files already exist
-missing_files = [file for file in required_files if not os.path.exists(os.path.join(target_folder, file))]
-
-if not missing_files:
-    print("✅ All required model files already exist in 'generation/'. No download needed.")
-else:
-    print("⚡ Some files missing. Downloading from Google Drive...")
-
-    # === Step 1: Download to temp
-    gdown.download_folder(id=folder_id, output=temp_download_path, quiet=False, use_cookies=False)
-
-    # === Step 2: Move only missing files
-    os.makedirs(target_folder, exist_ok=True)
-
-    for file in missing_files:
-        found = False
-        for root, dirs, files in os.walk(temp_download_path):
-            if file in files:
-                src_path = os.path.join(root, file)
-                dest_path = os.path.join(target_folder, file)
-                print(f"Moving {file} → {target_folder}")
-                shutil.move(src_path, dest_path)
-                found = True
-                break
-        if not found:
-            print(f"⚠️ Warning: {file} not found in downloaded folder.")
-
-    # === Step 3: Clean up temp
-    shutil.rmtree(temp_download_path)
-    print("Done! ✅")
-
 # Load image generation at startup
 print("Loading image generation model...")
 device = 'cpu'  # Force CPU
