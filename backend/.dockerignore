@@ -1,20 +1,25 @@
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-*.swp
-.Python
-.env
-.env.*
-*.db
-*.sqlite3
-.vscode/
-.idea/
-*.log
-.git/
-.gitignore
-.kaggle/
-venv/
-.mypy_cache/
-.pytest_cache/
-tests/
+# ignore everything...
+*
+# ...but keep these top-level files
+!app.py
+!requirements.txt
+# keep the folders themselves
+!generation/
+!detection/
+!vessel_map/
+!chatbot/
+!stylegan3/
+# within those folders, keep both weights **and** your source
+!generation/**/*.pkl
+!generation/**/*.py
+
+!detection/**/*.h5
+!detection/**/*.py
+
+!vessel_map/**/*.pth
+!vessel_map/**/*.py
+
+!chatbot/**/*.pkl     # (if you have any pickles here)
+!chatbot/**/*.py
+
+!stylegan3/**/*.py    # if you actually have any code under stylegan3

@@ -1,19 +1,28 @@
-FROM node:20-alpine
+# 1) Install deps
+FROM node:20-alpine AS deps
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --omit=dev
 
+# 2) Build
+FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Copy package files and install ALL dependencies (not only production)
-COPY package*.json ./
-RUN npm install
+ARG NEXT_PUBLIC_BACKEND_URL
+ENV NEXT_PUBLIC_BACKEND_URL=$NEXT_PUBLIC_BACKEND_URL
 
-# Copy frontend app code
 COPY . .
-
-# Build the app (creates `.next/` folder)
+COPY --from=deps /app/node_modules ./node_modules
 RUN npm run build
 
-# Expose port
-EXPOSE 3000
 
-# Start production server
-CMD ["npm", "run", "start"]
+# 3) Run
+FROM node:20-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+COPY --from=deps /app/node_modules ./node_modules
+COPY package.json ./
+EXPOSE 3000
+CMD ["npm", "start"]

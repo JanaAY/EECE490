@@ -1,0 +1,22 @@
+# node artifacts
+frontend/node_modules/
+frontend/.next/
+frontend/.vercel/
+
+# Python caches & environments
+**/__pycache__/
+**/*.py[cod]
+venv/
+*.env
+.env.*
+.kaggle/
+
+# Git + editors
+.git/
+.gitignore
+.vscode/
+.idea/
+
+# Logs, tests, temp
+*.log
+tests/

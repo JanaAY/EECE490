@@ -1,26 +1,31 @@
-# Inside backend/Dockerfile
-
-FROM python:3.11-slim
+FROM python:3.10-slim
+ENV CUDA_VISIBLE_DEVICES="" \
+    PIP_DEFAULT_TIMEOUT=1000
 
 WORKDIR /app
 
-# Install system dependencies
+# only system libs needed for cv2
 RUN apt-get update && apt-get install -y \
-    libgl1-mesa-glx \
-    libglib2.0-0 \
-    git \ 
+      libgl1-mesa-glx \
+      libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy only requirements first
+# copy in your requirements
 COPY requirements.txt .
-RUN pip install --default-timeout=300 --no-cache-dir -r requirements.txt
 
+# install PyTorch CPU wheels first, then the rest of your deps
+RUN pip install --no-cache-dir \
+      -f https://download.pytorch.org/whl/cpu/torch_stable.html \
+      torch==2.7.0 torchvision==0.16.1 && \
+    pip install --no-cache-dir -r requirements.txt
 
-# Copy backend code
-COPY . .
+# copy your app code & pre-downloaded assets
+COPY app.py .
+COPY generation/ ./generation/
+COPY detection/ ./detection/
+COPY vessel_map/ ./vessel_map/
+COPY chatbot/ ./chatbot/
+COPY stylegan3/ ./stylegan3/
 
-# Clone StyleGAN3 code
-RUN git clone https://github.com/NVlabs/stylegan3.git stylegan3
-
-# Run the app
+EXPOSE 5000
 CMD ["python", "app.py"]
