@@ -208,7 +208,7 @@ cd EECE490
 
 ```bash
 cd backend
-python3 -m venv .venv
+python -m venv .venv
 ```
 ```bash
 # On Linux/macOS:
