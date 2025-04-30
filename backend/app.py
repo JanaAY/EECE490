@@ -2,7 +2,6 @@ import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
-load_dotenv()
 import numpy as np
 import pickle
 from openai import AzureOpenAI
@@ -10,7 +9,11 @@ from sklearn.metrics.pairwise import cosine_similarity
 import base64
 import io
 import cv2
-import torch                               
+import torch
+import base64         
+import os
+import gdown
+import shutil                              
 
 # — Image Generation imports —
 from generation.generator import load_generator, generate_images
@@ -18,10 +21,17 @@ from generation.generator import load_generator, generate_images
 # — DR detection imports —
 from detection.model_detection import load_full_model, predict
 from detection.preprocess_detection import preprocess_detection
+from tensorflow import keras
 
 # — vessel mapping import —
 from vessel_map.model import DARes2UNet
 from vessel_map.preprocessing import preprocess_image
+
+
+# Debug prints
+print("API Key:", os.getenv("AZURE_OPENAI_KEY"))
+print("Endpoint:", os.getenv("AZURE_OPENAI_ENDPOINT"))
+print("Deployment:", os.getenv("AZURE_OPENAI_DEPLOYMENT"))
 
 # Initialize Azure OpenAI client
 client = AzureOpenAI(
@@ -30,34 +40,24 @@ client = AzureOpenAI(
     api_version="2025-01-01-preview"
 )
 
-# placeholders for your generators
-G_no_dr = None
-G_dr    = None
-
-# Initialize Flask app
-app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})
-
-
-@app.before_first_request
-def load_generation_models():
-    """Lazy-load the StyleGAN3 generators on first /generate call."""
-    global G_no_dr, G_dr
-
-    # only load once
-    if G_no_dr is None or G_dr is None:
-        print("Loading image generation models...")
-        gen_device = 'cpu'   # keep forcing CPU here
-        G_no_dr = load_generator('./generation/no_dr_model.pkl', device=gen_device)
-        G_dr    = load_generator('./generation/dr_model.pkl', device=gen_device)
-        print("Image generators loaded.")
+# Load image generation at startup
+print("Loading image generation model...")
+device = 'cpu'  # Force CPU
+try:
+    G_no_dr = load_generator('./generation/no_dr_model.pkl', device=device)
+    G_dr = load_generator('./generation/dr_model.pkl', device=device)
+    print("Image generators loaded successfully!")
+except Exception as e:
+    print(f"Error loading generators: {e}")
+    G_no_dr = None
+    G_dr = None
 
 # Load vessel mapping at startup
-torch_device = torch.device('cpu')
-vessel_model = DARes2UNet().to(torch_device)
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+vessel_model = DARes2UNet().to(device)
 print("Loading vessel mapping model...")
 try:
-    vessel_model.load_state_dict(torch.load('./vessel_map/best_model.pth', map_location=torch_device))
+    vessel_model.load_state_dict(torch.load('./vessel_map/best_model.pth', map_location=device))
     vessel_model.eval()
     print("Vessel mapping model loaded successfully!")
 except Exception as e:
@@ -69,6 +69,8 @@ print("Loading DR detection model...")
 # Make sure to point to the .h5 file
 dr_model = load_full_model("./detection/final_trained_model.h5")
 print("DR detection model loaded!")
+
+
 
 # Load embeddings and texts
 embedding_matrix = np.load("./chatbot/dr_embeddings.npy")
@@ -119,6 +121,11 @@ def ask_gpt_with_context(query, top_k=3):
     )
 
     return response.choices[0].message.content
+
+# Initialize Flask app
+app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "*"}})
+
 
 @app.post("/chat")
 def chat():
@@ -195,7 +202,7 @@ def generate_vessel_map():
         processed_img = preprocess_image(image)
         
         # Convert to tensor and add batch dimension
-        img_tensor = torch.from_numpy(processed_img).permute(2, 0, 1).unsqueeze(0).to(torch_device)
+        img_tensor = torch.from_numpy(processed_img).permute(2, 0, 1).unsqueeze(0).to(device)
         
         # Generate vessel map
         with torch.no_grad():
