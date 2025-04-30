@@ -225,9 +225,10 @@ python app.py
 
 This will start the Flask API on **http://localhost:5000**.
 
-### 3️⃣ Frontend (Next.js)
+### 3️⃣ Frontend (Next.js) (new terminal)
 
 ```bash
+cd EECE490
 cd frontend
 npm install
 npm run dev
